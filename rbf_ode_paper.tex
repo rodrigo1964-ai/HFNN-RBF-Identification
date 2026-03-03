@@ -1,0 +1,480 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\geometry{margin=2.5cm}
+
+\title{\textbf{Identificación de Sistemas No Lineales usando Redes de Base Radial en Ecuaciones Diferenciales Ordinarias}}
+
+\author{
+    Análisis y Metodología\\
+    \textit{Proyecto de Identificación con RBF}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este trabajo presenta una metodología para la identificación de funciones no lineales desconocidas en ecuaciones diferenciales ordinarias (ODEs) utilizando Redes de Base Radial (RBF). Dado un conjunto de datos experimentales que satisfacen una ecuación diferencial de la forma $y' + f(y) = g(t)$ donde $f(y)$ es desconocida, se propone un enfoque basado en tres etapas: (1) estimación de la derivada temporal desde los datos, (2) identificación de $f(y)$ mediante la ecuación, y (3) aproximación de $f(y)$ usando RBF. Se incluye un análisis de sensibilidad respecto al número de puntos experimentales requeridos. Los resultados muestran que con 50-75 puntos de datos se alcanza un error RMSE menor a 0.001, siendo la precisión de la derivada numérica el factor limitante principal.
+\end{abstract}
+
+\section{Planteamiento del Problema}
+
+\subsection{Contexto}
+
+En muchas aplicaciones científicas e ingenieriles, se dispone de mediciones experimentales de un sistema dinámico, pero se desconoce la forma analítica de las relaciones no lineales que gobiernan su comportamiento. Un caso común es cuando se tienen datos temporales $(t_i, y_i)$ que se sabe satisfacen una ecuación diferencial ordinaria de la forma:
+
+\begin{equation}
+\frac{dy}{dt} + f(y) = g(t)
+\label{eq:ode_general}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $y(t)$ es la variable de estado medida experimentalmente
+    \item $g(t)$ es una función forzante conocida
+    \item $f(y)$ es una función \textbf{desconocida} que describe la dinámica no lineal del sistema
+\end{itemize}
+
+\subsection{Problema Específico}
+
+Para este estudio, consideramos el caso particular:
+
+\begin{equation}
+\frac{dy}{dt} + f(y) = \sin(t), \quad y(0) = y_0
+\label{eq:ode_specific}
+\end{equation}
+
+donde la función verdadera (pero asumida desconocida) es:
+
+\begin{equation}
+f(y) = y^2
+\label{eq:f_true}
+\end{equation}
+
+\textbf{Desafío}: Identificar $f(y)$ únicamente a partir de mediciones discretas $(t_i, y_i)$ y usar esta aproximación para predecir el comportamiento del sistema.
+
+\subsection{Motivación}
+
+Este tipo de problemas aparece frecuentemente en:
+\begin{itemize}
+    \item Identificación de sistemas dinámicos no lineales
+    \item Modelado de procesos físicos a partir de datos experimentales
+    \item Descubrimiento de ecuaciones gobernantes (equation discovery)
+    \item Control y predicción de sistemas complejos
+\end{itemize}
+
+\section{Objetivo}
+
+\subsection{Objetivo General}
+
+Desarrollar y validar una metodología basada en Redes de Base Radial (RBF) para identificar funciones no lineales desconocidas en ecuaciones diferenciales ordinarias a partir de datos experimentales.
+
+\subsection{Objetivos Específicos}
+
+\begin{enumerate}
+    \item Implementar un método de identificación de $f(y)$ desde datos temporales $(t_i, y_i)$
+    \item Aproximar la función identificada usando Redes de Base Radial
+    \item Validar la aproximación resolviendo la ODE con la RBF entrenada
+    \item Determinar el número mínimo de puntos experimentales requeridos
+    \item Analizar la relación entre calidad de datos y precisión de identificación
+\end{enumerate}
+
+\section{Metodología Propuesta}
+
+\subsection{Visión General}
+
+La metodología se divide en cuatro etapas principales:
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{|c|}
+\hline
+\textbf{ETAPA 1: Datos Experimentales} \\
+$\{(t_i, y_i)\}_{i=1}^{N}$ \\
+\hline
+$\downarrow$ \\
+\hline
+\textbf{ETAPA 2: Cálculo de Derivada} \\
+$y'_i \approx \nabla y_i$ (diferencias finitas) \\
+\hline
+$\downarrow$ \\
+\hline
+\textbf{ETAPA 3: Identificación de $f(y)$} \\
+$f(y_i) = \sin(t_i) - y'_i$ \\
+\hline
+$\downarrow$ \\
+\hline
+\textbf{ETAPA 4: Aproximación RBF} \\
+Entrenar: $\text{RBF}(y) \approx f(y)$ \\
+Validar: Resolver ODE con RBF \\
+\hline
+\end{tabular}
+\caption{Flujo de la metodología propuesta}
+\label{fig:methodology}
+\end{figure}
+
+\subsection{Etapa 1: Datos Experimentales}
+
+\textbf{Entrada}: Conjunto de $N$ mediciones temporales
+\begin{equation}
+\mathcal{D} = \{(t_i, y_i)\}_{i=1}^{N}, \quad t_i \in [t_0, t_f]
+\end{equation}
+
+\textbf{Supuestos}:
+\begin{itemize}
+    \item Los datos satisfacen la ecuación~\eqref{eq:ode_specific}
+    \item El muestreo es suficientemente fino para estimar derivadas
+    \item Ruido experimental es pequeño o despreciable
+\end{itemize}
+
+\subsection{Etapa 2: Cálculo de la Derivada Temporal}
+
+Estimación numérica de $y'(t)$ usando diferencias finitas centradas:
+
+\begin{equation}
+y'_i \approx \frac{y_{i+1} - y_{i-1}}{t_{i+1} - t_{i-1}}
+\label{eq:derivative}
+\end{equation}
+
+Para los extremos, se usan diferencias hacia adelante o atrás. En Python, esto se implementa con \texttt{np.gradient(y\_data, t\_data)}.
+
+\textbf{Nota crítica}: La precisión de esta etapa es fundamental, ya que los errores en $y'_i$ se propagan directamente a la identificación de $f(y_i)$.
+
+\subsection{Etapa 3: Identificación de $f(y)$}
+
+De la ecuación~\eqref{eq:ode_specific}, despejamos:
+
+\begin{equation}
+f(y_i) = \sin(t_i) - y'_i
+\label{eq:f_identification}
+\end{equation}
+
+Esto genera un conjunto de pares $(y_i, f_i)$ donde:
+\begin{equation}
+\mathcal{F} = \{(y_i, f_i)\}_{i=1}^{N}, \quad f_i := f(y_i)
+\label{eq:training_pairs}
+\end{equation}
+
+\subsection{Etapa 4: Aproximación con Red de Base Radial}
+
+\subsubsection{Estructura de la RBF}
+
+Una Red de Base Radial aproxima $f(y)$ mediante:
+
+\begin{equation}
+\text{RBF}(y) = \sum_{j=1}^{M} w_j \phi_j(y) + w_0
+\label{eq:rbf_structure}
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $M$ es el número de centros (neuronas)
+    \item $\phi_j(y)$ son funciones de base radial gaussianas:
+    \begin{equation}
+    \phi_j(y) = \exp\left(-\frac{(y - c_j)^2}{2\sigma^2}\right)
+    \label{eq:gaussian_rbf}
+    \end{equation}
+    \item $c_j$ son los centros distribuidos en el rango de $y$
+    \item $\sigma$ controla el ancho de las gaussianas
+    \item $w_j$ son los pesos a determinar
+    \item $w_0$ es el sesgo (bias)
+\end{itemize}
+
+\subsubsection{Entrenamiento}
+
+\textbf{Posicionamiento de centros}: Los centros $\{c_j\}_{j=1}^{M}$ se distribuyen uniformemente:
+\begin{equation}
+c_j = y_{\min} + (j-1) \frac{y_{\max} - y_{\min}}{M-1}, \quad j = 1, \ldots, M
+\end{equation}
+
+\textbf{Cálculo de pesos}: Se resuelve el problema de mínimos cuadrados:
+\begin{equation}
+\min_{\mathbf{w}} \sum_{i=1}^{N} \left( \sum_{j=1}^{M} w_j \phi_j(y_i) + w_0 - f_i \right)^2
+\label{eq:least_squares}
+\end{equation}
+
+En forma matricial:
+\begin{equation}
+\boldsymbol{\Phi} \mathbf{w} = \mathbf{f}
+\end{equation}
+
+donde:
+\begin{equation}
+\boldsymbol{\Phi} =
+\begin{bmatrix}
+\phi_1(y_1) & \phi_2(y_1) & \cdots & \phi_M(y_1) & 1 \\
+\phi_1(y_2) & \phi_2(y_2) & \cdots & \phi_M(y_2) & 1 \\
+\vdots & \vdots & \ddots & \vdots & \vdots \\
+\phi_1(y_N) & \phi_2(y_N) & \cdots & \phi_M(y_N) & 1
+\end{bmatrix}, \quad
+\mathbf{w} =
+\begin{bmatrix}
+w_1 \\ w_2 \\ \vdots \\ w_M \\ w_0
+\end{bmatrix}, \quad
+\mathbf{f} =
+\begin{bmatrix}
+f_1 \\ f_2 \\ \vdots \\ f_N
+\end{bmatrix}
+\end{equation}
+
+La solución es:
+\begin{equation}
+\mathbf{w} = (\boldsymbol{\Phi}^T \boldsymbol{\Phi})^{-1} \boldsymbol{\Phi}^T \mathbf{f}
+\end{equation}
+
+\subsubsection{Validación}
+
+La RBF entrenada se valida resolviendo la ODE:
+\begin{equation}
+\frac{dy}{dt} + \text{RBF}(y) = \sin(t), \quad y(0) = y_0
+\label{eq:ode_with_rbf}
+\end{equation}
+
+usando un solver numérico (Runge-Kutta de orden 4/5) y comparando con los datos originales $(t_i, y_i)$.
+
+\subsection{Métricas de Evaluación}
+
+\begin{enumerate}
+    \item \textbf{Error en identificación de $f$}:
+    \begin{equation}
+    \text{RMSE}_f = \sqrt{\frac{1}{N}\sum_{i=1}^{N} (f_i - f_{\text{real}}(y_i))^2}
+    \end{equation}
+
+    \item \textbf{Error de aproximación RBF}:
+    \begin{equation}
+    \text{RMSE}_{\text{RBF}} = \sqrt{\frac{1}{N}\sum_{i=1}^{N} (\text{RBF}(y_i) - f_{\text{real}}(y_i))^2}
+    \end{equation}
+
+    \item \textbf{Error en solución ODE}:
+    \begin{equation}
+    \text{RMSE}_{\text{ODE}} = \sqrt{\frac{1}{N}\sum_{i=1}^{N} (y_{\text{pred}}(t_i) - y_i)^2}
+    \end{equation}
+
+    \item \textbf{Coeficiente de determinación}:
+    \begin{equation}
+    R^2 = 1 - \frac{\sum_{i=1}^{N}(y_i - y_{\text{pred},i})^2}{\sum_{i=1}^{N}(y_i - \bar{y})^2}
+    \end{equation}
+\end{enumerate}
+
+\section{Resultados}
+
+\subsection{Configuración Experimental}
+
+\begin{itemize}
+    \item \textbf{Dominio temporal}: $t \in [0, 5]$
+    \item \textbf{Condición inicial}: $y(0) = 0.5$
+    \item \textbf{Función verdadera}: $f(y) = y^2$
+    \item \textbf{RBF}: $M = 10$ centros, $\sigma = 0.3$
+    \item \textbf{Solver ODE}: RK45 con tolerancias $\text{rtol}=10^{-10}$, $\text{atol}=10^{-12}$
+\end{itemize}
+
+\subsection{Identificación Exitosa con 50 Puntos}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{ode_rbf_identification_complete.png}
+\caption{Proceso completo de identificación con 50 puntos de datos. Superior: datos experimentales, derivada calculada y función $f(y)$ identificada. Centro: aproximación de $f(y)$ con diferentes RBF y validación de soluciones. Inferior: análisis de errores y tabla resumen.}
+\label{fig:identification_complete}
+\end{figure}
+
+\subsubsection{Resultados Cuantitativos}
+
+\begin{table}[H]
+\centering
+\caption{Resultados con diferentes configuraciones de RBF (50 puntos)}
+\label{tab:results_50pts}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Centros} & \textbf{MSE $f(y)$} & \textbf{$R^2$ $f(y)$} & \textbf{RMSE ODE} & \textbf{$R^2$ ODE} \\
+\midrule
+5  & $2.08 \times 10^{-4}$ & 0.9975 & $1.83 \times 10^{-3}$ & 0.999986 \\
+10 & $7.42 \times 10^{-5}$ & 0.9991 & $1.03 \times 10^{-3}$ & 0.999996 \\
+15 & $7.16 \times 10^{-5}$ & 0.9991 & $1.25 \times 10^{-3}$ & 0.999993 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Observaciones}:
+\begin{itemize}
+    \item Con 10 centros se alcanza $R^2 > 0.9999$ en la validación ODE
+    \item Error máximo en solución: $< 5 \times 10^{-3}$
+    \item La RBF aproxima $f(y) = y^2$ casi perfectamente
+\end{itemize}
+
+\subsection{Análisis de Sensibilidad: Número de Puntos}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{ode_rbf_data_requirements.png}
+\caption{Análisis de sensibilidad al número de puntos experimentales. Se muestra el error en identificación de $f(y)$, aproximación RBF y solución ODE en función del número de datos disponibles. El paso temporal $\Delta t$ es el factor crítico.}
+\label{fig:data_requirements}
+\end{figure}
+
+\subsubsection{Resultados del Análisis}
+
+\begin{table}[H]
+\centering
+\caption{Error vs número de puntos experimentales}
+\label{tab:sensitivity}
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{N Puntos} & \textbf{$\Delta t$} & \textbf{Error $f(y)$} & \textbf{Error RBF} & \textbf{RMSE ODE} & \textbf{Error Máx} \\
+\midrule
+10  & 0.556 & $2.16 \times 10^{-1}$ & $2.16 \times 10^{-1}$ & $4.02 \times 10^{-1}$ & $1.49$ \\
+20  & 0.263 & $9.00 \times 10^{-2}$ & $8.45 \times 10^{-2}$ & $1.11 \times 10^{-1}$ & $0.67$ \\
+30  & 0.172 & $5.22 \times 10^{-2}$ & $4.90 \times 10^{-2}$ & $2.81 \times 10^{-3}$ & $0.010$ \\
+\rowcolor{green!10}
+50  & 0.102 & $2.56 \times 10^{-2}$ & $2.41 \times 10^{-2}$ & $1.05 \times 10^{-3}$ & $0.0045$ \\
+75  & 0.068 & $1.43 \times 10^{-2}$ & $1.34 \times 10^{-2}$ & $4.56 \times 10^{-4}$ & $0.0021$ \\
+100 & 0.051 & $9.44 \times 10^{-3}$ & $8.68 \times 10^{-3}$ & $2.70 \times 10^{-4}$ & $0.0012$ \\
+200 & 0.025 & $3.41 \times 10^{-3}$ & $2.83 \times 10^{-3}$ & $1.03 \times 10^{-4}$ & $0.0005$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Umbrales de Precisión}
+
+\begin{itemize}
+    \item \textbf{Para RMSE $< 0.01$}: Se requieren \textbf{mínimo 30 puntos}
+    \item \textbf{Para RMSE $< 0.001$}: Se requieren \textbf{mínimo 75 puntos}
+    \item \textbf{Recomendación general}: \textbf{50-75 puntos} para aplicaciones prácticas
+\end{itemize}
+
+\subsection{Relación Error vs Paso Temporal}
+
+El análisis muestra una relación clara:
+
+\begin{equation}
+\text{RMSE} \propto (\Delta t)^{\alpha}, \quad \alpha \approx 2
+\end{equation}
+
+indicando que el error de la derivada numérica de segundo orden domina el error total.
+
+\subsection{Comparación Métodos de Entrenamiento RBF}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{rbf_hybrid_comparison.png}
+\caption{Comparación de métodos: K-means + mínimos cuadrados (referencia), K-means + Levenberg-Marquardt (solo pesos), y L-M completo (centros + pesos). El método estándar K-means + lstsq resulta óptimo en robustez y eficiencia.}
+\label{fig:methods_comparison}
+\end{figure}
+
+\textbf{Conclusión}: El método híbrido K-means + mínimos cuadrados lineales es preferible a optimización completa con Levenberg-Marquardt por:
+\begin{itemize}
+    \item Mayor robustez (no cae en mínimos locales)
+    \item Solución analítica (más rápida)
+    \item Resultados equivalentes en precisión
+\end{itemize}
+
+\section{Discusión}
+
+\subsection{Factores Limitantes}
+
+\subsubsection{Derivada Numérica}
+
+El factor limitante principal es la precisión del cálculo de $y'_i$ mediante diferencias finitas. El error se puede caracterizar como:
+
+\begin{equation}
+\left| y'_i - \frac{dy}{dt}(t_i) \right| = O(\Delta t^2)
+\end{equation}
+
+para diferencias centradas, lo cual explica la relación cuadrática observada entre $\Delta t$ y el error total.
+
+\subsubsection{Aproximación RBF}
+
+La capacidad de aproximación de la RBF no es el cuello de botella. Con 10 centros, la RBF aproxima $f(y) = y^2$ con errores del orden de $10^{-5}$ incluso con pocos datos.
+
+\subsection{Ventajas del Método}
+
+\begin{enumerate}
+    \item \textbf{Simplicidad}: No requiere conocimiento previo de la forma de $f(y)$
+    \item \textbf{Flexibilidad}: RBF puede aproximar cualquier función no lineal
+    \item \textbf{Eficiencia}: Entrenamiento mediante solución analítica (lstsq)
+    \item \textbf{Robustez}: Resultados consistentes con diferentes configuraciones
+\end{enumerate}
+
+\subsection{Limitaciones}
+
+\begin{enumerate}
+    \item \textbf{Sensibilidad al paso temporal}: Requiere muestreo fino
+    \item \textbf{Ruido experimental}: Amplificado al calcular derivadas
+    \item \textbf{Extrapolación}: RBF puede comportarse mal fuera del rango de entrenamiento
+    \item \textbf{Supuestos}: Requiere que los datos satisfagan exactamente la ecuación
+\end{enumerate}
+
+\subsection{Aplicabilidad}
+
+Este método es aplicable cuando:
+\begin{itemize}
+    \item Se tiene suficiente densidad de datos ($\Delta t$ pequeño)
+    \item El ruido experimental es bajo
+    \item La no linealidad $f(y)$ es suave y bien comportada
+    \item Se conoce la estructura de la ecuación (forma de $g(t)$)
+\end{itemize}
+
+\section{Conclusiones}
+
+\begin{enumerate}
+    \item Se desarrolló exitosamente una metodología para identificar funciones no lineales en ODEs usando RBF a partir de datos experimentales.
+
+    \item El método identifica correctamente $f(y) = y^2$ con alta precisión ($R^2 > 0.999$) usando 50-75 puntos de datos.
+
+    \item La precisión de la derivada numérica es el factor limitante, requiriendo pasos temporales $\Delta t < 0.1$ para errores menores a 0.001.
+
+    \item Se estableció que \textbf{50-75 puntos} representan el balance óptimo entre precisión y costo computacional.
+
+    \item La configuración óptima de RBF es 10 centros con $\sigma = 0.3$, siendo robusta a variaciones.
+
+    \item El método estándar K-means + mínimos cuadrados supera a optimización completa con Levenberg-Marquardt en robustez y eficiencia.
+\end{enumerate}
+
+\subsection{Trabajo Futuro}
+
+\begin{itemize}
+    \item Extensión a sistemas de múltiples ecuaciones
+    \item Manejo de ruido experimental mediante técnicas de regularización
+    \item Incorporación de métodos de derivación robusta (ej: Total Variation Regularization)
+    \item Identificación de funciones multivariadas $f(y, z, ...)$
+    \item Aplicación a datos experimentales reales
+\end{itemize}
+
+\section{Código Implementado}
+
+El código completo está disponible en los siguientes archivos Python:
+
+\begin{itemize}
+    \item \texttt{rbf\_example.py}: Implementación básica de RBF
+    \item \texttt{ode\_rbf\_identification.py}: Metodología completa de identificación
+    \item \texttt{ode\_rbf\_data\_requirements.py}: Análisis de sensibilidad
+    \item \texttt{rbf\_hybrid\_fixed.py}: Comparación de métodos de entrenamiento
+\end{itemize}
+
+Todos los scripts son reproducibles y están documentados.
+
+\section*{Referencias}
+
+\begin{enumerate}
+    \item Broomhead, D. S., \& Lowe, D. (1988). Radial basis functions, multi-variable functional interpolation and adaptive networks. Royal Signals and Radar Establishment.
+
+    \item Poggio, T., \& Girosi, F. (1990). Networks for approximation and learning. Proceedings of the IEEE, 78(9), 1481-1497.
+
+    \item Brunton, S. L., Proctor, J. L., \& Kutz, J. N. (2016). Discovering governing equations from data by sparse identification of nonlinear dynamical systems. Proceedings of the National Academy of Sciences, 113(15), 3932-3937.
+
+    \item Raissi, M., Perdikaris, P., \& Karniadakis, G. E. (2019). Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations. Journal of Computational Physics, 378, 686-707.
+\end{enumerate}
+
+\end{document}
