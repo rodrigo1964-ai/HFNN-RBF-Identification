@@ -1,0 +1,1 @@
+Esta es una secuencias de Publicaciones que demuestra la necesidad de ajustar una ANN como la RBF con regresores 

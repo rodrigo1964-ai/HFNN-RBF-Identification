@@ -109,13 +109,13 @@ fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
 # Subplot 1: Soluciones temporales
 ax = axes[0, 0]
-ax.plot(t_data, y_data, 'ko', markersize=8, label='Datos (N=10)', zorder=5)
-ax.plot(t_dense, y_ref, 'k-', linewidth=2, label='Referencia RK45', alpha=0.7)
-ax.plot(t_dense, y_trad, 'r--', linewidth=2, label='Tradicional')
-ax.plot(t_dense, y_reg, 'b-', linewidth=2, label='Regresor', alpha=0.8)
-ax.set_xlabel('Tiempo t [s]')
-ax.set_ylabel('Desplazamiento y(t)')
-ax.set_title(f'(a) Comparación de soluciones (N={N})')
+ax.plot(t_data, y_data, 'ko', markersize=8, label='Data (N=10)', zorder=5)
+ax.plot(t_dense, y_ref, 'k-', linewidth=2, label='Reference RK45', alpha=0.7)
+ax.plot(t_dense, y_trad, 'r--', linewidth=2, label='Traditional')
+ax.plot(t_dense, y_reg, 'b-', linewidth=2, label='Regressor', alpha=0.8)
+ax.set_xlabel('Time t [s]')
+ax.set_ylabel('Displacement y(t)')
+ax.set_title(f'(a) Solution comparison (N={N})')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
@@ -123,11 +123,11 @@ ax.grid(True, alpha=0.3)
 ax = axes[0, 1]
 err_trad = np.abs(y_trad - y_ref)
 err_reg = np.abs(y_reg - y_ref)
-ax.semilogy(t_dense, err_trad, 'r--', linewidth=2, label=f'Tradicional (max={err_trad.max():.2e})')
-ax.semilogy(t_dense, err_reg, 'b-', linewidth=2, label=f'Regresor (max={err_reg.max():.2e})')
-ax.set_xlabel('Tiempo t [s]')
-ax.set_ylabel('Error absoluto |y - y_ref|')
-ax.set_title('(b) Evolución del error')
+ax.semilogy(t_dense, err_trad, 'r--', linewidth=2, label=f'Traditional (max={err_trad.max():.2e})')
+ax.semilogy(t_dense, err_reg, 'b-', linewidth=2, label=f'Regressor (max={err_reg.max():.2e})')
+ax.set_xlabel('Time t [s]')
+ax.set_ylabel('Absolute error |y - y_ref|')
+ax.set_title('(b) Error evolution')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
@@ -137,13 +137,13 @@ y_eval = np.linspace(y_data.min(), y_data.max(), 200)
 f_eval_true = true_spring_force(y_eval)
 f_eval_trad = rbf_trad.eval(y_eval)
 f_eval_reg = rbf_reg.eval(y_eval)
-ax.plot(y_data, f_true, 'ko', markersize=8, label='Datos', zorder=5)
-ax.plot(y_eval, f_eval_true, 'k-', linewidth=2, label='f(y) real', alpha=0.7)
-ax.plot(y_eval, f_eval_trad, 'r--', linewidth=2, label='Tradicional')
-ax.plot(y_eval, f_eval_reg, 'b-', linewidth=2, label='Regresor', alpha=0.8)
-ax.set_xlabel('Desplazamiento y')
-ax.set_ylabel('Fuerza f(y)')
-ax.set_title('(c) Aproximación de la fuerza no lineal')
+ax.plot(y_data, f_true, 'ko', markersize=8, label='Data', zorder=5)
+ax.plot(y_eval, f_eval_true, 'k-', linewidth=2, label='True f(y)', alpha=0.7)
+ax.plot(y_eval, f_eval_trad, 'r--', linewidth=2, label='Traditional')
+ax.plot(y_eval, f_eval_reg, 'b-', linewidth=2, label='Regressor', alpha=0.8)
+ax.set_xlabel('Displacement y')
+ax.set_ylabel('Force f(y)')
+ax.set_title('(c) Nonlinear force approximation')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
@@ -155,11 +155,11 @@ rmse_reg = np.sqrt(np.mean((y_reg - y_ref)**2))
 mejora = (rmse_trad - rmse_reg) / rmse_trad * 100
 
 table_data = [
-    ['Métrica', 'Tradicional', 'Regresor', 'Mejora'],
+    ['Metric', 'Traditional', 'Regressor', 'Improvement'],
     ['RMSE y(t)', f'{rmse_trad:.3e}', f'{rmse_reg:.3e}', f'{mejora:+.1f}%'],
-    ['Error Max', f'{err_trad.max():.3e}', f'{err_reg.max():.3e}', ''],
-    ['N datos', str(N), str(N), ''],
-    ['Paso T', f'{T_MAX/(N-1):.3f} s', f'{T_MAX/(N-1):.3f} s', ''],
+    ['Max Error', f'{err_trad.max():.3e}', f'{err_reg.max():.3e}', ''],
+    ['Data points', str(N), str(N), ''],
+    ['Step T', f'{T_MAX/(N-1):.3f} s', f'{T_MAX/(N-1):.3f} s', ''],
 ]
 
 table = ax.table(cellText=table_data, cellLoc='center', loc='center',
@@ -173,7 +173,7 @@ for i in range(4):
     table[(0, i)].set_facecolor('#4472C4')
     table[(0, i)].set_text_props(weight='bold', color='white')
 
-ax.set_title('(d) Métricas de desempeño', pad=20)
+ax.set_title('(d) Performance metrics', pad=20)
 
 plt.tight_layout()
 plt.savefig('/home/rodo/1Paper/PublicationE/duffing_regressor_comparison_N10.png',
@@ -215,12 +215,12 @@ fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 
 # Subplot 1: Error vs N
 ax = axes[0]
-ax.semilogy(N_values, errors_trad, 'r-o', linewidth=2, markersize=8, label='Tradicional')
-ax.semilogy(N_values, errors_reg, 'b-s', linewidth=2, markersize=8, label='Regresor')
-ax.axvline(20, color='gray', linestyle=':', alpha=0.5, label='Transición')
-ax.set_xlabel('Número de puntos N')
-ax.set_ylabel('RMSE de y(t)')
-ax.set_title('(a) Error vs cantidad de datos')
+ax.semilogy(N_values, errors_trad, 'r-o', linewidth=2, markersize=8, label='Traditional')
+ax.semilogy(N_values, errors_reg, 'b-s', linewidth=2, markersize=8, label='Regressor')
+ax.axvline(20, color='gray', linestyle=':', alpha=0.5, label='Transition')
+ax.set_xlabel('Number of points N')
+ax.set_ylabel('RMSE of y(t)')
+ax.set_title('(a) Error vs amount of data')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
@@ -232,18 +232,18 @@ colors = ['green' if m > 0 else 'red' for m in mejora_pct]
 ax.bar(N_values, mejora_pct, color=colors, alpha=0.7, edgecolor='black')
 ax.axhline(0, color='black', linewidth=1)
 ax.axvline(20, color='gray', linestyle=':', alpha=0.5)
-ax.set_xlabel('Número de puntos N')
-ax.set_ylabel('Mejora del regresor (%)')
-ax.set_title('(b) Mejora relativa')
+ax.set_xlabel('Number of points N')
+ax.set_ylabel('Regressor improvement (%)')
+ax.set_title('(b) Relative improvement')
 ax.grid(True, alpha=0.3, axis='y')
 
 # Subplot 3: Tiempo de cómputo
 ax = axes[2]
-ax.semilogy(N_values, times_trad, 'r-o', linewidth=2, markersize=8, label='Tradicional')
-ax.semilogy(N_values, times_reg, 'b-s', linewidth=2, markersize=8, label='Regresor')
-ax.set_xlabel('Número de puntos N')
-ax.set_ylabel('Tiempo de cómputo [s]')
-ax.set_title('(c) Eficiencia computacional')
+ax.semilogy(N_values, times_trad, 'r-o', linewidth=2, markersize=8, label='Traditional')
+ax.semilogy(N_values, times_reg, 'b-s', linewidth=2, markersize=8, label='Regressor')
+ax.set_xlabel('Number of points N')
+ax.set_ylabel('Computation time [s]')
+ax.set_title('(c) Computational efficiency')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
@@ -275,10 +275,10 @@ for idx, (N, ax) in enumerate(zip([10, 20, 30, 50], axes.flatten())):
     f_eval_reg = rbf_reg.eval(y_eval)
 
     # Plot
-    ax.plot(y_data, f_true, 'ko', markersize=6, label='Datos', zorder=5)
-    ax.plot(y_eval, f_eval_true, 'k-', linewidth=2, label='Real', alpha=0.7)
-    ax.plot(y_eval, f_eval_trad, 'r--', linewidth=2, label='Tradicional', alpha=0.8)
-    ax.plot(y_eval, f_eval_reg, 'b-', linewidth=2, label='Regresor', alpha=0.8)
+    ax.plot(y_data, f_true, 'ko', markersize=6, label='Data', zorder=5)
+    ax.plot(y_eval, f_eval_true, 'k-', linewidth=2, label='True', alpha=0.7)
+    ax.plot(y_eval, f_eval_trad, 'r--', linewidth=2, label='Traditional', alpha=0.8)
+    ax.plot(y_eval, f_eval_reg, 'b-', linewidth=2, label='Regressor', alpha=0.8)
 
     # Calcular errores
     f_true_eval = true_spring_force(y_data)
