@@ -1,6 +1,6 @@
 """
-Genera las figuras para el paper de PublicationE
-Comparación de Métodos: Regresor vs Tradicional con Datos Escasos
+Generate figures for PublicationE paper
+Method Comparison: Regressor vs Traditional with Sparse Data
 """
 import numpy as np
 from scipy.integrate import solve_ivp
@@ -11,14 +11,14 @@ from rbf_analytical import RBFAnalytical
 from duffing_regressor_rbf import solve_duffing_regressor, true_spring_force
 import time
 
-# Configuración matplotlib
+# Matplotlib configuration
 plt.rcParams['font.size'] = 10
 plt.rcParams['axes.labelsize'] = 11
 plt.rcParams['axes.titlesize'] = 12
 plt.rcParams['legend.fontsize'] = 9
 plt.rcParams['figure.dpi'] = 150
 
-# Parámetros físicos
+# Physical parameters
 D = 0.2
 A_SPRING = 1.0
 B_SPRING = 0.5
@@ -26,7 +26,7 @@ A_FORCE = 0.8
 OMEGA = 1.2
 
 def solve_duffing_rk45(t_span, y0, v0):
-    """Resolver con RK45 (referencia)"""
+    """Solve with RK45 (reference solution)"""
     def duffing_ode(t, state):
         y, v = state
         f_spring = true_spring_force(y)
@@ -40,25 +40,25 @@ def solve_duffing_rk45(t_span, y0, v0):
     return sol
 
 def train_rbf(y_data, f_data, n_centers):
-    """Entrenar RBF para aproximar f(y)"""
+    """Train RBF to approximate f(y)"""
     y_min, y_max = y_data.min(), y_data.max()
     centers = np.linspace(y_min - 0.1, y_max + 0.1, n_centers)
     sigma = (y_max - y_min) / (2 * n_centers)
 
-    # Matriz de diseño
+    # Design matrix
     distances = y_data.reshape(-1, 1) - centers.reshape(1, -1)
     phi = np.exp(-(distances ** 2) / (2 * sigma ** 2))
     phi_aug = np.hstack([phi, np.ones((len(y_data), 1))])
 
-    # Mínimos cuadrados
+    # Least squares
     weights = np.linalg.lstsq(phi_aug, f_data, rcond=None)[0]
 
     rbf = RBFAnalytical(centers, sigma, weights)
     return rbf
 
 def traditional_method(t_data, y_data, n_centers):
-    """Método tradicional: despejar + RBF"""
-    # Calcular derivadas numéricas
+    """Traditional method: solve for unknowns + RBF"""
+    # Calculate numerical derivatives
     dt = np.diff(t_data)
     v = np.diff(y_data) / dt
     v_ext = np.concatenate(([v[0]], v))
@@ -66,48 +66,48 @@ def traditional_method(t_data, y_data, n_centers):
     dv = np.diff(v_ext) / dt
     dv_ext = np.concatenate(([dv[0]], dv))
 
-    # Despejar f(y)
+    # Solve for f(y)
     f_despeje = -dv_ext - D * v_ext + A_FORCE * np.cos(OMEGA * t_data)
 
-    # Entrenar RBF
+    # Train RBF
     rbf = train_rbf(y_data, f_despeje, n_centers)
     return rbf, f_despeje
 
 print("="*70)
-print("GENERANDO FIGURAS PARA PUBLICATION E")
+print("GENERATING FIGURES FOR PUBLICATION E")
 print("="*70)
 
 # ==============================================================================
-# FIGURA 1: Comparación con N=10 puntos (datos muy escasos)
+# FIGURE 1: Comparison with N=10 points (very sparse data)
 # ==============================================================================
-print("\n[1/3] Generando figura 1: Comparación N=10...")
+print("\n[1/3] Generating figure 1: Comparison N=10...")
 
 N = 10
 T_MAX = 15.0
 t_data = np.linspace(0, T_MAX, N)
 y0, v0 = 0.5, 0.0
 
-# Solución de referencia
+# Reference solution
 sol_ref = solve_duffing_rk45([0, T_MAX], y0, v0)
 t_dense = np.linspace(0, T_MAX, 500)
 y_ref = sol_ref.sol(t_dense)[0]
 
-# Datos experimentales
+# Experimental data
 y_data = sol_ref.sol(t_data)[0]
 f_true = true_spring_force(y_data)
 
-# Método tradicional
+# Traditional method
 rbf_trad, f_despeje = traditional_method(t_data, y_data, n_centers=3)
 y_trad = solve_duffing_regressor(rbf_trad, t_dense, y0, sol_ref.sol(t_data)[1, 0])
 
-# Método regresor
+# Regressor method
 rbf_reg = train_rbf(y_data, f_true, n_centers=3)
 y_reg = solve_duffing_regressor(rbf_reg, t_dense, y0, v0)
 
-# Crear figura
+# Create figure
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
-# Subplot 1: Soluciones temporales
+# Subplot 1: Time solutions
 ax = axes[0, 0]
 ax.plot(t_data, y_data, 'ko', markersize=8, label='Data (N=10)', zorder=5)
 ax.plot(t_dense, y_ref, 'k-', linewidth=2, label='Reference RK45', alpha=0.7)
@@ -119,7 +119,7 @@ ax.set_title(f'(a) Solution comparison (N={N})')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
-# Subplot 2: Errores absolutos
+# Subplot 2: Absolute errors
 ax = axes[0, 1]
 err_trad = np.abs(y_trad - y_ref)
 err_reg = np.abs(y_reg - y_ref)
@@ -131,7 +131,7 @@ ax.set_title('(b) Error evolution')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
-# Subplot 3: Aproximación de f(y)
+# Subplot 3: f(y) approximation
 ax = axes[1, 0]
 y_eval = np.linspace(y_data.min(), y_data.max(), 200)
 f_eval_true = true_spring_force(y_eval)
@@ -147,7 +147,7 @@ ax.set_title('(c) Nonlinear force approximation')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
-# Subplot 4: Tabla de errores
+# Subplot 4: Error table
 ax = axes[1, 1]
 ax.axis('off')
 rmse_trad = np.sqrt(np.mean((y_trad - y_ref)**2))
@@ -168,7 +168,7 @@ table.auto_set_font_size(False)
 table.set_fontsize(10)
 table.scale(1, 2)
 
-# Estilo
+# Style
 for i in range(4):
     table[(0, i)].set_facecolor('#4472C4')
     table[(0, i)].set_text_props(weight='bold', color='white')
@@ -176,14 +176,14 @@ for i in range(4):
 ax.set_title('(d) Performance metrics', pad=20)
 
 plt.tight_layout()
-plt.savefig('/home/rodo/1Paper/PublicationE/duffing_regressor_comparison_N10.png',
+plt.savefig('/home/rodo/1Paper/CaseStudy_4/duffing_regressor_comparison_N10.png',
             dpi=150, bbox_inches='tight')
-print("✓ Figura guardada: duffing_regressor_comparison_N10.png")
+print("✓ Figure saved: duffing_regressor_comparison_N10.png")
 
 # ==============================================================================
-# FIGURA 2: Análisis de sensibilidad (N vs Error)
+# FIGURE 2: Sensitivity analysis (N vs Error)
 # ==============================================================================
-print("\n[2/3] Generando figura 2: Análisis de sensibilidad...")
+print("\n[2/3] Generating figure 2: Sensitivity analysis...")
 
 N_values = [10, 15, 20, 25, 30, 40, 50]
 errors_trad = []
@@ -192,19 +192,19 @@ times_trad = []
 times_reg = []
 
 for N in N_values:
-    print(f"  Procesando N={N}...")
+    print(f"  Processing N={N}...")
     t_data = np.linspace(0, T_MAX, N)
     y_data = sol_ref.sol(t_data)[0]
     f_true = true_spring_force(y_data)
 
-    # Tradicional
+    # Traditional
     t0 = time.time()
     rbf_trad, _ = traditional_method(t_data, y_data, n_centers=max(3, N//5))
     y_trad = solve_duffing_regressor(rbf_trad, t_dense, y0, sol_ref.sol(t_data)[1, 0])
     times_trad.append(time.time() - t0)
     errors_trad.append(np.sqrt(np.mean((y_trad - y_ref)**2)))
 
-    # Regresor
+    # Regressor
     t0 = time.time()
     rbf_reg = train_rbf(y_data, f_true, n_centers=max(3, N//5))
     y_reg = solve_duffing_regressor(rbf_reg, t_dense, y0, v0)
@@ -224,7 +224,7 @@ ax.set_title('(a) Error vs amount of data')
 ax.legend()
 ax.grid(True, alpha=0.3)
 
-# Subplot 2: Mejora relativa
+# Subplot 2: Relative improvement
 ax = axes[1]
 mejora_pct = [(errors_trad[i] - errors_reg[i])/errors_trad[i]*100
               for i in range(len(N_values))]
@@ -237,7 +237,7 @@ ax.set_ylabel('Regressor improvement (%)')
 ax.set_title('(b) Relative improvement')
 ax.grid(True, alpha=0.3, axis='y')
 
-# Subplot 3: Tiempo de cómputo
+# Subplot 3: Computation time
 ax = axes[2]
 ax.semilogy(N_values, times_trad, 'r-o', linewidth=2, markersize=8, label='Traditional')
 ax.semilogy(N_values, times_reg, 'b-s', linewidth=2, markersize=8, label='Regressor')
@@ -248,14 +248,14 @@ ax.legend()
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('/home/rodo/1Paper/PublicationE/duffing_sensitivity_analysis.png',
+plt.savefig('/home/rodo/1Paper/CaseStudy_4/duffing_sensitivity_analysis.png',
             dpi=150, bbox_inches='tight')
-print("✓ Figura guardada: duffing_sensitivity_analysis.png")
+print("✓ Figure saved: duffing_sensitivity_analysis.png")
 
 # ==============================================================================
-# FIGURA 3: Comparación de aproximación RBF de f(y)
+# FIGURE 3: RBF approximation comparison for f(y)
 # ==============================================================================
-print("\n[3/3] Generando figura 3: Comparación de RBF...")
+print("\n[3/3] Generating figure 3: RBF comparison...")
 
 fig, axes = plt.subplots(2, 2, figsize=(12, 8))
 
@@ -264,11 +264,11 @@ for idx, (N, ax) in enumerate(zip([10, 20, 30, 50], axes.flatten())):
     y_data = sol_ref.sol(t_data)[0]
     f_true = true_spring_force(y_data)
 
-    # Entrenar RBFs
+    # Train RBFs
     rbf_trad, f_despeje = traditional_method(t_data, y_data, n_centers=max(3, N//5))
     rbf_reg = train_rbf(y_data, f_true, n_centers=max(3, N//5))
 
-    # Evaluar
+    # Evaluate
     y_eval = np.linspace(y_data.min()-0.2, y_data.max()+0.2, 300)
     f_eval_true = true_spring_force(y_eval)
     f_eval_trad = rbf_trad.eval(y_eval)
@@ -280,7 +280,7 @@ for idx, (N, ax) in enumerate(zip([10, 20, 30, 50], axes.flatten())):
     ax.plot(y_eval, f_eval_trad, 'r--', linewidth=2, label='Traditional', alpha=0.8)
     ax.plot(y_eval, f_eval_reg, 'b-', linewidth=2, label='Regressor', alpha=0.8)
 
-    # Calcular errores
+    # Calculate errors
     f_true_eval = true_spring_force(y_data)
     f_trad_eval = rbf_trad.eval(y_data)
     f_reg_eval = rbf_reg.eval(y_data)
@@ -295,10 +295,10 @@ for idx, (N, ax) in enumerate(zip([10, 20, 30, 50], axes.flatten())):
     ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.savefig('/home/rodo/1Paper/PublicationE/duffing_rbf_comparison.png',
+plt.savefig('/home/rodo/1Paper/CaseStudy_4/duffing_rbf_comparison.png',
             dpi=150, bbox_inches='tight')
-print("✓ Figura guardada: duffing_rbf_comparison.png")
+print("✓ Figure saved: duffing_rbf_comparison.png")
 
 print("\n" + "="*70)
-print("✓ TODAS LAS FIGURAS GENERADAS")
+print("✓ ALL FIGURES GENERATED SUCCESSFULLY")
 print("="*70)
