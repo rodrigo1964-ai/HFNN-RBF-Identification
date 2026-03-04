@@ -1,0 +1,15 @@
+# Requirements for HFNN-RBF Identification Project
+# Regresor Homotópico con RBF para Identificación de Sistemas No Lineales
+
+# Core scientific computing
+numpy>=1.20.0
+scipy>=1.7.0
+
+# Plotting and visualization
+matplotlib>=3.3.0
+
+# Symbolic mathematics (optional, for derivative generation)
+sympy>=1.9
+
+# Optional: for enhanced optimization
+# scikit-learn>=1.0.0  # Uncomment if needed for additional ML tools

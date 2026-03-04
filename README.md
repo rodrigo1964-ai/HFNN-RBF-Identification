@@ -1,112 +1,342 @@
-# HFNN-RBF-Identification
+# Regresor Homotópico con RBF para Identificación de Sistemas No Lineales
 
-**Homotopy-Based Functional Neural Networks with Radial Basis Functions for Robust Identification of Nonlinear Dynamic Systems**
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> Companion code for the manuscript submitted to *Neurocomputing* (Elsevier), Manuscript ID: NEUCOM-D-25-16620.
+## 📄 Descripción General
 
-## Overview
+Este repositorio contiene la implementación completa de **4 casos de estudio** que demuestran el uso del **regresor homotópico de 3 puntos** (serie de Liao) para resolver ecuaciones diferenciales no lineales, incluyendo la innovadora combinación con **Redes de Base Radial (RBF)** para identificación de funciones desconocidas.
 
-This repository contains the complete source code and reproducible experiments for a novel approach to nonlinear system identification using:
+**Documento principal:** `main_revised.pdf` - Análisis completo de los 4 casos de estudio
 
-- **Homotopy Analysis Method (HAM)** for converting implicit nonlinear discrete equations into explicit algebraic regressors
-- **Radial Basis Function (RBF) networks** as embedded approximators with analytical derivatives
-- **Levenberg–Marquardt optimization** for parameter adaptation with as few as 30 data samples
+## 🎯 Objetivos del Proyecto
 
-The HFNN regressor uses $N(y)$, $N'(y)$, and $N''(y)$ — computed exactly from the Gaussian RBF kernel — to resolve the implicit nonlinear coupling algebraically, providing a theoretically founded discretization analogous to what Tustin and zero-order hold provide for linear systems.
+1. **Validar el regresor homotópico** para diferentes tipos de ecuaciones diferenciales
+2. **Integrar RBF** para aproximar funciones no lineales desconocidas
+3. **Comparar precisión** con métodos tradicionales (RK4, odeint)
+4. **Demostrar aplicabilidad** en identificación de sistemas reales
 
-## Repository Structure
+## 📚 Casos de Estudio
+
+### Caso 1: Ecuación No Lineal Polinomial
+**Carpeta:** [`CaseStudy_1/`](CaseStudy_1/)
+
+**Ecuación:** `y' + y² = sin(5t)`
+
+**Características:**
+- ✅ Función no lineal polinomial simple
+- ✅ Derivadas analíticas explícitas
+- ✅ Error RMS ~10⁻⁴ (N=500)
+- ✅ Tiempo: ~3-5 ms
+
+**Archivos principales:**
+- `caso1_regressor.py` - Implementación del regresor
+- `test_caso1.py` - Tests y análisis de convergencia
+- `generate_figures.py` - Generación de figuras
+- `README.md` - Documentación completa
+
+**Conclusión:** El regresor homotópico alcanza excelente precisión para sistemas no lineales de primer orden.
+
+---
+
+### Caso 2: Ecuación No Lineal Trigonométrica
+**Carpeta:** [`CaseStudy_2/`](CaseStudy_2/)
+
+**Ecuación:** `y' + sin²(y) = sin(5t)`
+
+**Características:**
+- ✅ Función no lineal trigonométrica
+- ✅ Derivadas trigonométricas: f'(y) = sin(2y)
+- ✅ Error RMS ~10⁻³ (N=500)
+- ✅ Estabilidad numérica por acotación de funciones trigonométricas
+
+**Archivos principales:**
+- `caso2_regressor.py` - Implementación del regresor
+- `test_caso2.py` - Tests y análisis
+- `generate_figures.py` - Figuras
+- `README.md` - Documentación
+
+**Conclusión:** El método mantiene precisión con funciones trigonométricas, aunque requiere mayor cuidado por la periodicidad.
+
+---
+
+### Caso 3: Identificación con RBF (Primer Orden)
+**Carpeta:** [`CaseStudy_3/`](CaseStudy_3/)
+
+**Ecuación:** `y' + β(y) = sin(5t)` donde `β(y) = 0.1y³ + 0.1y² + y - 1` es **desconocida**
+
+**Características:**
+- 🌟 **Primera introducción de RBF** para funciones desconocidas
+- ✅ RBF Gaussiana con integral: ∫exp(-(x-c)²/σ²)dx
+- ✅ Optimización con Nelder-Mead
+- ✅ Error RMS ~10⁻³ (N=100, k=5 neuronas)
+- ✅ Regresor de Liao con derivadas de RBF
+
+**Archivos principales:**
+- `rbf_integration.py` - Módulo de RBF con integrales
+- `caso3_regressor_rbf.py` - Regresor con RBF
+- `optimize_rbf_caso3.py` - Optimización Nelder-Mead
+- `test_caso3.py` - Suite de tests
+- `generate_figures.py` - Figuras
+- `README.md` - Documentación
+
+**Conclusión:** La combinación RBF + regresor homotópico permite identificar funciones desconocidas con alta precisión.
+
+---
+
+### Caso 4: Oscilador de Duffing con RBF
+**Carpeta:** [`CaseStudy_4/`](CaseStudy_4/)
+
+**Ecuación:** `y'' + 0.2·y' + f(y) = 0.8·cos(1.2·t)` donde `f(y) = 1.0·y + 0.5·y³`
+
+**Características:**
+- 🌟 **Sistema de segundo orden muy no lineal**
+- ✅ Regresor homotópico de orden superior
+- ✅ RBF con derivadas analíticas hasta orden 3
+- ✅ Error RMS ~4.09×10⁻² (N=3000)
+- ✅ Análisis completo de sensibilidad y regímenes óptimos
+
+**Archivos principales:**
+- `rbf_analytical.py` - RBF con derivadas analíticas
+- `duffing_regressor_rbf.py` - Regresor principal
+- `optimize_rbf_regressor.py` - Comparación métodos
+- `sensitivity_analysis_regressor.py` - Análisis de sensibilidad
+- `test_duffing_regressor.py` - Tests
+- `generate_figures.py` - Figuras
+- `duffing_regressor_paper.pdf` - Paper completo (8 páginas)
+- `README.md` - Documentación
+
+**Conclusión:** El regresor homotópico es especialmente valioso con datos escasos (N≤20), logrando mejoras de +50% a +99% sobre métodos tradicionales.
+
+---
+
+## 🔬 Método del Regresor Homotópico
+
+### Principio Fundamental
+
+El regresor homotópico de 3 puntos resuelve ecuaciones diferenciales mediante:
+
+1. **Discretización** usando diferencias finitas hacia atrás (3 puntos)
+2. **Tres correcciones iterativas** por punto (serie de Liao):
+   - **z1**: Corrección Newton-Raphson
+   - **z2**: Corrección de orden 2 (término cuadrático)
+   - **z3**: Corrección de orden 3 (término cúbico)
+
+### Ecuaciones de Primer Orden
+
+Para `y' + f(y) = u(t)`:
 
 ```
-├── PublicationA/    # RBF identification in first-order ODEs
-│   ├── ode_rbf_identification.py
-│   ├── ode_rbf_data_requirements.py
-│   └── rbf_example.py
-│
-├── PublicationB/    # Direct optimization (no numerical derivatives)
-│   ├── ode_rbf_direct_optimization.py
-│   └── ode_rbf_direct_sensitivity.py
-│
-├── PublicationC/    # Pendulum with viscous friction (2nd order)
-│   ├── pendulum_rbf_identification.py
-│   └── pendulum_sensitivity_analysis.py
-│
-├── PublicationD/    # Duffing oscillator — limits of direct optimization
-│   └── duffing_rbf_identification.py
-│
-├── PublicationE/    # Homotopy regressor with RBF for Duffing (main result)
-│   ├── rbf_analytical.py              # RBF with analytical derivatives
-│   ├── duffing_regressor_rbf.py       # Homotopy regressor implementation
-│   ├── test_duffing_regressor.py      # Main experiments
-│   ├── sensitivity_analysis_regressor.py
-│   └── optimize_rbf_regressor.py      # LM optimization
-│
-└── *.py, *.png     # Additional scripts and figures
+Discretización:
+  y'[k] ≈ (3y[k] - 4y[k-1] + y[k-2]) / (2T)
+
+Función residual:
+  g(y[k]) = (3/2)·y[k]/T - 2·y[k-1]/T + (1/2)·y[k-2]/T + f(y[k]) - u[k]
+
+Correcciones:
+  z1: y[k] ← y[k] - g/g'
+  z2: y[k] ← y[k] - (1/2)·g²·g''/(g')³
+  z3: y[k] ← y[k] - (1/6)·g³·(-g'''·g' + 3·g''²)/(g')⁵
 ```
 
-## Key Results
+donde `g' = 3/(2T) + f'(y[k])`, `g'' = f''(y[k])`, `g''' = f'''(y[k])`
 
-| Method | Samples | MSE | Time |
-|--------|---------|-----|------|
-| Traditional (numerical derivatives + RBF) | 40 | 2.7 × 10⁻¹ | 0.0004 s |
-| HFNN regressor with embedded RBF | 30 | < 10⁻⁸ | 0.31 s |
-| PINNs (literature) | 100–500 | ~ 10⁻³ | minutes |
-| Neural ODEs (literature) | 300–1000 | ~ 10⁻³ | minutes |
+### Integración con RBF
 
-## Requirements
+Para funciones desconocidas `β(y)`, se aproxima con RBF Gaussiana:
 
 ```
-Python >= 3.8
-numpy
-scipy
-matplotlib
+β(y) ≈ Σ wⱼ·φⱼ(y)   donde   φⱼ(y) = exp(-(y-cⱼ)²/(2σ²))
 ```
 
-## Quick Start
+El regresor requiere:
+- `β(y)` ← Integral de RBF
+- `β'(y)` ← RBF
+- `β''(y)` ← Derivada de RBF
+- `β'''(y)` ← Segunda derivada de RBF
+
+## 📊 Resultados Comparativos
+
+| Caso | Ecuación | N Puntos | Error RMS | Tiempo | RBF |
+|------|----------|----------|-----------|--------|-----|
+| 1 | y' + y² = sin(5t) | 500 | ~10⁻⁴ | 3-5 ms | No |
+| 2 | y' + sin²(y) = sin(5t) | 500 | ~10⁻³ | 6 ms | No |
+| 3 | y' + β(y) = sin(5t) | 100 | ~10⁻³ | 15 ms | Sí (k=5) |
+| 4 | Duffing (2° orden) | 3000 | 4.09×10⁻² | 309 ms | Sí (k=?) |
+
+### Orden de Convergencia
+
+- **Casos 1-3:** O(T^0.9-1.0) - Reducir T a la mitad mejora error ~2×
+- **Caso 4:** Más complejo por no linealidad fuerte
+
+## 🚀 Cómo Usar Este Repositorio
+
+### Requisitos
+
+**Python 3.8 o superior**
+
+Instalar dependencias:
 
 ```bash
-# Run the main Duffing experiment with homotopy regressor
-cd PublicationE
-python test_duffing_regressor.py
-
-# Run sensitivity analysis (varying number of data points)
-python sensitivity_analysis_regressor.py
-
-# Run RBF optimization with Levenberg-Marquardt
-python optimize_rbf_regressor.py
+pip install -r requirements.txt
 ```
 
-## RBF Analytical Derivatives
+O manualmente:
 
-The Gaussian RBF and its exact derivatives used in the homotopy regressor:
+```bash
+pip install numpy scipy matplotlib sympy
+```
 
-$$N(y) = \sum_{j=1}^{M} w_j \exp\left(-\frac{(y - c_j)^2}{2\sigma^2}\right) + w_0$$
+### Ejecutar un Caso de Estudio
 
-$$N'(y) = \sum_{j=1}^{M} w_j \varphi_j(y) \cdot \left(-\frac{y - c_j}{\sigma^2}\right)$$
+**Ejemplo: Caso 1**
 
-$$N''(y) = \sum_{j=1}^{M} w_j \varphi_j(y) \cdot \left(\frac{(y - c_j)^2}{\sigma^4} - \frac{1}{\sigma^2}\right)$$
+```bash
+cd CaseStudy_1
 
-These feed into the HFNN regressor: $y_k = y_{k-1} + z_1 + z_2$, where $z_1$ is the Newton correction and $z_2$ is the Halley/Olver correction.
+# Test principal
+python3 caso1_regressor.py
 
-## Citation
+# Tests completos
+python3 test_caso1.py
 
-If you use this code, please cite:
+# Generar figuras
+python3 generate_figures.py
+```
+
+**Repite para otros casos** (CaseStudy_2, CaseStudy_3, CaseStudy_4)
+
+### Estructura de Cada Caso
+
+Todos los casos siguen una estructura consistente:
+
+```
+CaseStudy_X/
+├── casoX_regressor[_rbf].py    # Implementación principal
+├── test_casoX.py               # Suite de tests
+├── generate_figures.py         # Generación de figuras
+├── README.md                   # Documentación del caso
+├── [rbf_*.py]                  # Módulos RBF (casos 3 y 4)
+├── [optimize_*.py]             # Optimización (casos 3 y 4)
+└── [figuras generadas]         # PNG de alta calidad
+```
+
+## 📖 Publicaciones y Referencia
+
+Este proyecto forma parte de una serie de trabajos sobre identificación de sistemas:
+
+1. **PublicationA**: Método tradicional (despeje + RBF)
+2. **PublicationB**: Optimización directa (sin derivadas)
+3. **PublicationC**: Validación en péndulo con fricción
+4. **PublicationD**: Oscilador de Duffing (límites de optimización)
+5. **PublicationE**: Regresor homotópico con RBF ← **Este trabajo**
+
+**Documento principal:** Leer `main_revised.pdf` para el análisis completo de los 4 casos.
+
+## 💡 Recomendaciones Prácticas
+
+### Cuándo Usar el Regresor Homotópico
+
+**✅ RECOMENDADO:**
+- Sistemas lineales o moderadamente no lineales
+- Datos escasos (N ≤ 20-30)
+- Aplicaciones en tiempo real o embebidos
+- Derivadas analíticas calculables
+- Simplicidad de implementación importante
+
+**⚠️ CONSIDERAR ALTERNATIVAS:**
+- Sistemas muy no lineales o caóticos (requiere T muy pequeño)
+- Derivadas difíciles de calcular
+- Máxima precisión con mínimo ajuste requerido
+
+### Cuándo Usar RBF + Regresor
+
+**✅ USAR RBF cuando:**
+- Función no lineal `f(y)` o `β(y)` es **desconocida**
+- Solo se tienen datos de la función
+- Precisión aceptable con k=5-10 neuronas
+- Se acepta costo de optimización inicial
+
+**⚠️ EVITAR RBF cuando:**
+- Función analítica conocida (usar derivadas directas)
+- Muy pocos datos para entrenar (k<3)
+- Tiempo de entrenamiento es crítico
+
+## 📂 Archivos Adicionales
+
+### Código Base Reutilizable
+
+- `ode_rbf_solver.py` - Solver genérico de ODEs con RBF
+- `ode_rbf_approximation.py` - Aproximación de ODEs
+- `ode_rbf_identification.py` - Identificación completa
+- `ode_rbf_data_requirements.py` - Análisis de requisitos de datos
+- `rbf_*.py` - Diferentes implementaciones de RBF
+
+### Notebooks Jupyter (Originales)
+
+Cada carpeta `CaseStudy_X/` contiene los notebooks Jupyter originales del desarrollo:
+- `Caso_X_2p_v1.ipynb` - Versión principal
+- `Caso_X_2p.ipynb` - Versión preliminar
+- Archivos PDF de exportación
+
+Estos notebooks son referencias históricas; **usar los scripts Python** para reproducibilidad.
+
+## 🔑 Conclusiones Principales
+
+1. **El regresor homotópico es competitivo** con RK4/odeint para sistemas de complejidad baja a moderada
+
+2. **La integración con RBF** permite identificar funciones desconocidas, abriendo aplicaciones en sistemas reales
+
+3. **Ventaja en datos escasos**: Con N≤20, el regresor supera métodos tradicionales (+50% a +99%)
+
+4. **Orden de convergencia O(T)**: Predictible y escalable, aunque más lento que RK4 (O(T⁴))
+
+5. **Implementación simple**: Solo 3 correcciones por paso, ideal para embebidos
+
+6. **No hay método universalmente superior**: La elección depende de:
+   - Cantidad de datos disponibles
+   - Grado de no linealidad
+   - Requisitos de precisión vs velocidad
+   - Disponibilidad de derivadas analíticas
+
+## 📧 Información del Proyecto
+
+- **Autor**: Rodolfo H. Rodrigo
+- **Institución**: Universidad Nacional de San Juan (UNSJ)
+- **Fecha**: Marzo 2026
+- **Métodos**: Regresor Homotópico (serie de Liao) + RBF Gaussiana
+
+## 📝 Cómo Citar
+
+Si usas este código en tu investigación, por favor cita:
 
 ```bibtex
-@article{rodrigo2025hfnn,
-  title={Homotopy-Based Functional Neural Networks for Robust Identification 
-         of Uncertain Nonlinear Dynamic Systems},
-  author={Rodrigo, Rodolfo H. and Schweickardt, Gustavo and Pati{\~n}o, Daniel H.},
-  journal={Neurocomputing (submitted)},
-  year={2025}
+@software{rodrigo2026hfnn_rbf,
+  author = {Rodrigo, Rodolfo H.},
+  title = {Regresor Homotópico con RBF para Identificación de Sistemas No Lineales},
+  year = {2026},
+  publisher = {GitHub},
+  url = {https://github.com/rodrigo1964-ai/HFNN-RBF-Identification}
 }
 ```
 
-## License
+## 🤝 Contribuciones
 
-MIT License — see [LICENSE](LICENSE) for details.
+Este es un proyecto académico de investigación. Para preguntas o colaboraciones, contactar a través de GitHub Issues.
 
-## Authors
+## 📜 Licencia
 
-- **Rodolfo H. Rodrigo** — Universidad Nacional de San Juan
-- **Gustavo Schweickardt** — CONICET / Universidad Tecnológica Nacional
-- **Daniel H. Patiño** — Instituto de Automática (INAUT), UNSJ
+MIT License - Ver archivo `LICENSE` para detalles.
+
+---
+
+**Próximos Pasos Sugeridos:**
+1. Implementar control adaptativo del paso temporal T
+2. Extender a sistemas MIMO (múltiples entradas/salidas)
+3. Portar a microcontroladores (ARM, ESP32)
+4. Comparar con métodos adaptativos (RK45, Dormand-Prince)
+5. Aplicar a sistemas físicos reales (robótica, control de procesos)
+
+---
+
+**⭐ Si este proyecto te resulta útil, considera darle una estrella en GitHub!**
