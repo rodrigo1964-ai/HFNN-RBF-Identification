@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Rodrigo"
+    given-names: "Rodolfo H."
+    email: rrodrigo@unsj.edu.ar
+    affiliation: "Universidad Nacional de San Juan (UNSJ), Argentina"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "HFNN-RBF Identification: Homotopy Feedforward Neural Networks with RBF for System Identification"
+version: 1.0.0
+date-released: 2026-03-06
+url: "https://github.com/rodrigo1964-ai/HFNN-RBF-Identification"
+license: GPL-3.0
+repository-code: "https://github.com/rodrigo1964-ai/HFNN-RBF-Identification"
+keywords:
+  - system-identification
+  - neural-networks
+  - rbf
+  - homotopy-analysis-method
+  - nonlinear-systems
+preferred-citation:
+  type: conference-paper
+  authors:
+    - family-names: "Rodrigo"
+      given-names: "Rodolfo H."
+  title: "Neuronal Homotopy Regressors"
+  conference:
+    name: "XIX Workshop on Information Processing and Control (RPIC)"
+  year: 2021
+  doi: "10.1109/RPIC53795.2021.9648481"
