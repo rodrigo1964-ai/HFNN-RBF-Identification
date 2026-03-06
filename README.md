@@ -9,6 +9,23 @@ Este repositorio contiene la implementación completa de **4 casos de estudio** 
 
 **Documento principal:** `main_revised.pdf` - Análisis completo de los 4 casos de estudio
 
+## 📁 Repository Structure
+
+```
+HFNN-RBF-Identification/
+├── CaseStudy_1/          # Case 1: Polynomial nonlinear equation
+├── CaseStudy_2/          # Case 2: Trigonometric nonlinear equation
+├── CaseStudy_3/          # Case 3: First-order RBF identification
+├── CaseStudy_4/          # Case 4: Second-order Duffing oscillator with RBF
+├── docs/                  # Documentation and papers
+│   ├── CaseStudy_*/      # Documentation for each case study
+│   └── main_revised.pdf  # Complete analysis document
+├── CITATION.cff          # Citation information with DOI
+├── LICENSE               # GPL-3.0 license
+├── README.md             # This file
+└── requirements.txt      # Python dependencies
+```
+
 ## 🎯 Objetivos del Proyecto
 
 1. **Validar el regresor homotópico** para diferentes tipos de ecuaciones diferenciales
