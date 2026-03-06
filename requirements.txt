@@ -2,14 +2,16 @@
 # Regresor Homotópico con RBF para Identificación de Sistemas No Lineales
 
 # Core scientific computing
-numpy>=1.20.0
-scipy>=1.7.0
-
-# Plotting and visualization
-matplotlib>=3.3.0
-
-# Symbolic mathematics (optional, for derivative generation)
-sympy>=1.9
+numpy>=1.24.0
+scipy>=1.10.0
+matplotlib>=3.7.0
+sympy>=1.12
 
 # Optional: for enhanced optimization
 # scikit-learn>=1.0.0  # Uncomment if needed for additional ML tools
+
+# Development dependencies (optional)
+# pytest>=7.0
+# pytest-cov
+# black
+# flake8
