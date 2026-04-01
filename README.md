@@ -1,7 +1,7 @@
 # Regresor Homotópico con RBF para Identificación de Sistemas No Lineales
 
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)](LICENSE)
 
 ## 📄 Descripción General
 
@@ -343,7 +343,7 @@ Este es un proyecto académico de investigación. Para preguntas o colaboracione
 
 ## 📜 Licencia
 
-MIT License - Ver archivo `LICENSE` para detalles.
+GPL-3.0 License - Ver archivo `LICENSE` para detalles.
 
 ---
 
